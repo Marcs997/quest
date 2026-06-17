@@ -16,62 +16,80 @@
   <div class="scanlines" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
 
-  <main class="screen">
+  <div class="layout">
 
-    <!-- logo -->
-    <header class="logo">
-      <img src="Ressources/Logo.png" alt="QUEST" />
-    </header>
+    <!-- reward items rail (filled in by main.js) -->
+    <aside class="items" aria-label="Items à gagner">
+      <span class="items__title">BUTIN</span>
+      <div class="items__rail" id="itemsRail"></div>
+    </aside>
 
-    <!-- progress bar -->
-    <section class="progress" aria-label="Progression du jeu">
-      <div class="progress__head">
-        <span class="progress__title">PROGRESSION</span>
-        <span class="progress__level">LV <em id="levelValue">05</em></span>
-      </div>
-      <div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="99" aria-valuenow="5">
-        <span class="xpbar__cap">00</span>
-        <div class="xpbar__track">
-          <div class="xpbar__fill" id="xpFill">
-            <span class="xpbar__shine"></span>
+    <main class="screen">
+
+      <!-- logo -->
+      <header class="logo">
+        <img src="Ressources/Logo.png" alt="QUEST" />
+      </header>
+
+      <!-- progress bar -->
+      <section class="progress" aria-label="Progression du jeu">
+        <div class="progress__head">
+          <span class="progress__title">PROGRESSION</span>
+          <span class="progress__level">LV <em id="levelValue">05</em></span>
+        </div>
+        <div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="99" aria-valuenow="5">
+          <span class="xpbar__cap">00</span>
+          <div class="xpbar__track">
+            <div class="xpbar__fill" id="xpFill">
+              <span class="xpbar__shine"></span>
+            </div>
+            <div class="xpbar__ticks" aria-hidden="true"></div>
           </div>
-          <div class="xpbar__ticks" aria-hidden="true"></div>
+          <span class="xpbar__cap">99</span>
         </div>
-        <span class="xpbar__cap">99</span>
+      </section>
+
+      <!-- players -->
+      <section class="players" aria-label="Joueurs">
+        <figure class="player player--1">
+          <div class="player__stage">
+            <img class="player__skin" src="Ressources/Perso1.png" alt="Joueur 1" />
+            <span class="player__shadow"></span>
+          </div>
+          <figcaption class="player__name">JOUEUR 1</figcaption>
+        </figure>
+
+        <span class="players__vs" aria-hidden="true">VS</span>
+
+        <figure class="player player--2">
+          <div class="player__stage">
+            <img class="player__skin" src="Ressources/Perso2.png" alt="Joueur 2" />
+            <span class="player__shadow"></span>
+          </div>
+          <figcaption class="player__name">JOUEUR 2</figcaption>
+        </figure>
+      </section>
+
+      <!-- level up -->
+      <div class="levelup">
+        <button type="button" class="btn-levelup" id="levelUpBtn">
+          <span class="btn-levelup__label">LEVEL UP</span>
+        </button>
       </div>
-    </section>
 
-    <!-- players -->
-    <section class="players" aria-label="Joueurs">
-      <figure class="player player--1">
-        <div class="player__stage">
-          <img class="player__skin" src="Ressources/Perso1.png" alt="Joueur 1" />
-          <span class="player__shadow"></span>
+      <!-- world map -->
+      <section class="world" aria-label="La map du jeu">
+        <div class="world__frame">
+          <canvas id="worldMap" width="616" height="308" role="img" aria-label="Map du monde de Quest"></canvas>
         </div>
-        <figcaption class="player__name">JOUEUR 1</figcaption>
-      </figure>
+        <span class="world__caption">— MAP —</span>
+      </section>
 
-      <span class="players__vs" aria-hidden="true">VS</span>
+    </main>
+  </div>
 
-      <figure class="player player--2">
-        <div class="player__stage">
-          <img class="player__skin" src="Ressources/Perso2.png" alt="Joueur 2" />
-          <span class="player__shadow"></span>
-        </div>
-        <figcaption class="player__name">JOUEUR 2</figcaption>
-      </figure>
-    </section>
-
-    <!-- world map -->
-    <section class="world" aria-label="Le monde du jeu">
-      <div class="world__frame">
-        <canvas id="worldMap" width="616" height="308" role="img" aria-label="Carte du monde de Quest"></canvas>
-      </div>
-      <span class="world__caption">— LE MONDE —</span>
-    </section>
-
-  </main>
-
+  <script src="state.js"></script>
+  <script src="main.js"></script>
   <script src="map.js"></script>
 </body>
 </html>

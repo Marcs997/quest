@@ -7,17 +7,7 @@
 (function () {
   "use strict";
 
-  /* ---- level / progress wiring ---- */
-  var LEVEL = 5, MAX = 99;
-  var fill = document.getElementById("xpFill");
-  var label = document.getElementById("levelValue");
-  if (fill) {
-    // start at 0 then animate to the real value on next frame
-    requestAnimationFrame(function () {
-      fill.style.width = (LEVEL / MAX) * 100 + "%";
-    });
-  }
-  if (label) label.textContent = String(LEVEL).padStart(2, "0");
+  /* (level / progress + items wiring lives in state.js + main.js) */
 
   /* ---- canvas setup ---- */
   var canvas = document.getElementById("worldMap");
