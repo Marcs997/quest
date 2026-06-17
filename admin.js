@@ -9,6 +9,9 @@
   var Q = window.Quest;
   var PASSWORD = "0953";
 
+  // load shared state from the JSON bin right away (before unlock)
+  Q.init();
+
   /* ---- password gate ---- */
   var gateForm = document.getElementById("gateForm");
   var gateCard = document.getElementById("gateCard");

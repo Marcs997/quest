@@ -61,14 +61,15 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     buildRail();
-    renderItems();
-    // animate bar from 0 to current on load
-    requestAnimationFrame(function () { renderLevel(true); });
 
     var btn = document.getElementById("levelUpBtn");
     if (btn) btn.addEventListener("click", onLevelUp);
 
-    // live-sync when the admin page changes things in another tab
+    // re-render on every state change (local, cross-tab, or remote poll)
     Q.onChange(function () { renderLevel(true); renderItems(); });
+
+    // initial paint, then load shared state from the JSON bin
+    requestAnimationFrame(function () { renderLevel(true); renderItems(); });
+    Q.init();
   });
 })();
