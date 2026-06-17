@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>QUEST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- atmosphere layers -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-stars" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <main class="screen">
+
+    <!-- logo -->
+    <header class="logo">
+      <img src="Ressources/Logo.png" alt="QUEST" />
+    </header>
+
+    <!-- progress bar -->
+    <section class="progress" aria-label="Progression du jeu">
+      <div class="progress__head">
+        <span class="progress__title">PROGRESSION</span>
+        <span class="progress__level">LV <em id="levelValue">05</em></span>
+      </div>
+      <div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="99" aria-valuenow="5">
+        <span class="xpbar__cap">00</span>
+        <div class="xpbar__track">
+          <div class="xpbar__fill" id="xpFill">
+            <span class="xpbar__shine"></span>
+          </div>
+          <div class="xpbar__ticks" aria-hidden="true"></div>
+        </div>
+        <span class="xpbar__cap">99</span>
+      </div>
+    </section>
+
+    <!-- players -->
+    <section class="players" aria-label="Joueurs">
+      <figure class="player player--1">
+        <div class="player__stage">
+          <img class="player__skin" src="Ressources/Perso1.png" alt="Joueur 1" />
+          <span class="player__shadow"></span>
+        </div>
+        <figcaption class="player__name">JOUEUR 1</figcaption>
+      </figure>
+
+      <span class="players__vs" aria-hidden="true">VS</span>
+
+      <figure class="player player--2">
+        <div class="player__stage">
+          <img class="player__skin" src="Ressources/Perso2.png" alt="Joueur 2" />
+          <span class="player__shadow"></span>
+        </div>
+        <figcaption class="player__name">JOUEUR 2</figcaption>
+      </figure>
+    </section>
+
+    <!-- world map -->
+    <section class="world" aria-label="Le monde du jeu">
+      <div class="world__frame">
+        <canvas id="worldMap" width="616" height="308" role="img" aria-label="Carte du monde de Quest"></canvas>
+      </div>
+      <span class="world__caption">— LE MONDE —</span>
+    </section>
+
+  </main>
+
+  <script src="map.js"></script>
+</body>
+</html>

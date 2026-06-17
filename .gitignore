@@ -1,0 +1,6 @@
+# local Claude Code settings & notes (contain project info I input — keep private)
+.claude/
+CLAUDE.md
+
+# QA / preview artifacts
+_preview_*.png
