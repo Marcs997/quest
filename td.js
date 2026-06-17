@@ -88,6 +88,13 @@
   /* ---- rendu principal ---- */
   function render() {
     var td = Q.getTd();
+    // re-claim my own presence if a concurrent write dropped it (join race).
+    // localDirty (in state.js) prevents the next poll from clobbering it again.
+    if (!present(td, me)) {
+      td.players[me] = Date.now();
+      Q.updateTd({ players: td.players });
+      return;
+    }
     // player 1 démarre la session quand les deux sont présents
     if (me === 1 && !td.active && present(td, 1) && present(td, 2)) {
       Q.updateTd({ active: true, asker: 1, phase: "start", round: 0, choice: null, prompt: null, response: null, log: [] });
