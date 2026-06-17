@@ -21,7 +21,11 @@ window.Quest = (function () {
   };
 
   var MAX = 99, DEFAULT_LEVEL = 5;
-  var POLL_MS = 3000;
+  var POLL_IDLE = 5000, POLL_ACTIVE = 2000;
+  var DEFAULT_TD = {
+    active: false, players: { 1: 0, 2: 0 }, asker: 1,
+    phase: "start", choice: null, prompt: null, response: null, round: 0, log: []
+  };
   var LS_KEY = "quest.state";
   var API = "https://api.jsonbin.io/v3/b/" + CONFIG.binId;
   var remoteEnabled =
@@ -70,7 +74,11 @@ window.Quest = (function () {
   ];
 
   /* ---- internal state ---- */
-  var cache = { level: DEFAULT_LEVEL, items: ITEMS.map(function () { return false; }) };
+  var cache = {
+    level: DEFAULT_LEVEL,
+    items: ITEMS.map(function () { return false; }),
+    td: JSON.parse(JSON.stringify(DEFAULT_TD))
+  };
   var lastSerialized = "";
   var listeners = [];
   var putTimer = null;
@@ -78,12 +86,33 @@ window.Quest = (function () {
 
   function clampLevel(v) { return Math.max(0, Math.min(MAX, v | 0)); }
 
+  function normTd(t) {
+    t = t || {};
+    var pl = t.players || {};
+    var phases = ["start", "choose", "prompt", "respond"];
+    return {
+      active: !!t.active,
+      players: { 1: parseInt(pl[1], 10) || 0, 2: parseInt(pl[2], 10) || 0 },
+      asker: t.asker === 2 ? 2 : 1,
+      phase: phases.indexOf(t.phase) >= 0 ? t.phase : "start",
+      choice: (t.choice === "action" || t.choice === "verite") ? t.choice : null,
+      prompt: typeof t.prompt === "string" ? t.prompt : null,
+      response: typeof t.response === "string" ? t.response : null,
+      round: parseInt(t.round, 10) || 0,
+      log: Array.isArray(t.log) ? t.log.slice(-60) : []
+    };
+  }
+
   function normalize(d) {
     d = d || {};
     var lvl = parseInt(d.level, 10);
     var items = (Array.isArray(d.items) && d.items.length === ITEMS.length)
       ? d.items.map(Boolean) : ITEMS.map(function () { return false; });
-    return { level: isNaN(lvl) ? DEFAULT_LEVEL : clampLevel(lvl), items: items };
+    return {
+      level: isNaN(lvl) ? DEFAULT_LEVEL : clampLevel(lvl),
+      items: items,
+      td: normTd(d.td)
+    };
   }
 
   function emit() { listeners.forEach(function (fn) { try { fn(); } catch (e) {} }); }
@@ -138,16 +167,34 @@ window.Quest = (function () {
     else fetchRemote();
   }
 
+  /* self-scheduling poll loop with dynamic interval + visibility pause */
+  var pollMs = POLL_IDLE, pollHandle = null;
+  function scheduleNextPoll() {
+    if (pollHandle) clearTimeout(pollHandle);
+    pollHandle = setTimeout(function () {
+      if (!document.hidden) tick();
+      scheduleNextPoll();
+    }, pollMs);
+  }
+  function setActive(on) { pollMs = on ? POLL_ACTIVE : POLL_IDLE; }
+
   /* ---- public API ---- */
   function getLevel() { return cache.level; }
   function getItems() { return cache.items.slice(); }
+  function getTd() { return JSON.parse(JSON.stringify(cache.td)); }
 
   function setLevel(v) {
-    setCache({ level: clampLevel(v), items: cache.items.slice() }, true);
+    setCache({ level: clampLevel(v), items: cache.items.slice(), td: cache.td }, true);
     schedulePush();
   }
   function setItems(arr) {
-    setCache({ level: cache.level, items: arr.map(Boolean) }, true);
+    setCache({ level: cache.level, items: arr.map(Boolean), td: cache.td }, true);
+    schedulePush();
+  }
+  function updateTd(patch) {
+    var t = getTd();
+    for (var k in patch) { if (patch.hasOwnProperty(k)) t[k] = patch[k]; }
+    setCache({ level: cache.level, items: cache.items.slice(), td: t }, true);
     schedulePush();
   }
   function setItem(i, val) {
@@ -173,17 +220,18 @@ window.Quest = (function () {
 
     // 3) load remote + poll for other users' changes
     if (remoteEnabled) {
-      return fetchRemote().then(function () {
-        setInterval(tick, POLL_MS);
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) tick();
       });
+      return fetchRemote().then(function () { scheduleNextPoll(); });
     }
     return Promise.resolve();
   }
 
   return {
     MAX: MAX, DEFAULT_LEVEL: DEFAULT_LEVEL, ITEMS: ITEMS, remoteEnabled: remoteEnabled,
-    init: init, onChange: onChange,
-    getLevel: getLevel, getItems: getItems,
-    setLevel: setLevel, setItems: setItems, setItem: setItem
+    init: init, onChange: onChange, setActive: setActive,
+    getLevel: getLevel, getItems: getItems, getTd: getTd,
+    setLevel: setLevel, setItems: setItems, setItem: setItem, updateTd: updateTd
   };
 })();
