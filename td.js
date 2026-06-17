@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   var Q = window.Quest;
-  var PRESENCE_TTL = 25000;   // un joueur est "présent" si vu il y a < 25s
+  var PRESENCE_TTL = 40000;   // un joueur est "présent" si vu il y a < 40s
   var HEARTBEAT_MS = 10000;   // rafraîchit sa présence toutes les 10s
 
   var me = parseInt(localStorage.getItem("quest.td.me"), 10);
@@ -119,14 +119,22 @@
       Q.updateTd({ active: true, asker: 1, phase: "start", round: 0, choice: null, prompt: null, response: null, log: [] });
       return;
     }
-    var both = present(td, 1) && present(td, 2);
-    if (!both || !td.active) {
+    if (!td.active) {
+      // session pas encore lancée → on attend dans le lobby que les deux aient rejoint
       lobby.hidden = false; game.hidden = true;
       statusEl.textContent = !present(td, other)
         ? "En attente de l'autre joueur…" : "Démarrage de la partie…";
       return;
     }
+    // session active → on garde l'écran de jeu même si l'autre met son onglet en
+    // arrière-plan (mobile). Seul « Quitter le jeu » ferme la session.
     lobby.hidden = true; game.hidden = false;
+    var absentEl = document.getElementById("tdAbsent");
+    if (absentEl) {
+      var away = !present(td, other);
+      absentEl.hidden = !away;
+      if (away) absentEl.textContent = pname(other) + " est absent… la partie reprendra à son retour.";
+    }
     renderLog(td);
     var isAsker = (me === td.asker);
     roleEl.textContent = isAsker ? "À TOI D'INTERROGER" : "À TOI DE RÉPONDRE";
@@ -175,11 +183,13 @@
     var td = Q.getTd(); td.players[me] = Date.now();
     Q.updateTd({ players: td.players });
     render();
-    setInterval(function () {
-      if (!document.hidden) {
-        var t = Q.getTd(); t.players[me] = Date.now();
-        Q.updateTdEphemeral({ players: t.players }); // refresh presence without blocking reads
-      }
-    }, HEARTBEAT_MS);
+    function beat() {
+      if (!ready || quitting) return;
+      var t = Q.getTd(); t.players[me] = Date.now();
+      Q.updateTdEphemeral({ players: t.players }); // refresh presence without blocking reads
+    }
+    setInterval(function () { if (!document.hidden) beat(); }, HEARTBEAT_MS);
+    // coming back from background (e.g. unlocking the phone): re-assert presence at once
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) beat(); });
   });
 })();

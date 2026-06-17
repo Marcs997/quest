@@ -682,6 +682,8 @@ img, canvas {
 .td-role { font-family: "Press Start 2P", monospace; font-size: 12px; text-align: center; padding: 12px; border: var(--tick) solid var(--line); background: var(--panel); }
 .td-role--asker { color: var(--teal); border-color: var(--teal-deep); }
 .td-role--answerer { color: var(--amber); border-color: var(--amber-deep); }
+.td-absent { font-family: "VT323", monospace; font-size: 17px; color: var(--amber); text-align: center; margin: 0; opacity: .85; }
+.td-absent[hidden] { display: none; }
 
 .td-action { min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .td-big { font-size: 16px; padding: 16px 26px; }
