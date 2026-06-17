@@ -13,6 +13,7 @@
   var other = me === 1 ? 2 : 1;
   var ready = false;     // true once the shared state has loaded from the bin
   var quitting = false;  // true once the player has hit "Quitter le jeu"
+  var lastActionKey = null; // last rendered action-area "view" (avoids wiping typed text)
 
   var lobby = document.getElementById("tdLobby");
   var game = document.getElementById("tdGame");
@@ -139,6 +140,12 @@
     var isAsker = (me === td.asker);
     roleEl.textContent = isAsker ? "À TOI D'INTERROGER" : "À TOI DE RÉPONDRE";
     roleEl.className = "td-role td-role--" + (isAsker ? "asker" : "answerer");
+
+    // only rebuild the action area when the view actually changes, otherwise a poll
+    // would recreate the <textarea> and wipe what the player is typing.
+    var actionKey = td.phase + "|" + isAsker + "|" + (td.choice || "") + "|" + (td.prompt || "");
+    if (actionKey === lastActionKey) return;
+    lastActionKey = actionKey;
 
     if (td.phase === "start") {
       actionEl.innerHTML = isAsker
