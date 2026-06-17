@@ -192,8 +192,7 @@
     render();
     function beat() {
       if (!ready || quitting) return;
-      var t = Q.getTd(); t.players[me] = Date.now();
-      Q.updateTdEphemeral({ players: t.players }); // refresh presence without blocking reads
+      Q.heartbeatPresence(me); // reads freshest state first, then writes presence (no clobber)
     }
     setInterval(function () { if (!document.hidden) beat(); }, HEARTBEAT_MS);
     // coming back from background (e.g. unlocking the phone): re-assert presence at once

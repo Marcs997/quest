@@ -168,6 +168,29 @@ window.Quest = (function () {
     return pushRemote();
   }
 
+  /* Refresh my presence safely. Read the freshest state FIRST, then write presence
+     on top of it — otherwise a heartbeat writing a stale whole-object cache would
+     clobber a move the other player just made (question "appears then vanishes"). */
+  function heartbeatPresence(meId) {
+    if (!remoteEnabled) {
+      var t0 = getTd(); t0.players[meId] = Date.now();
+      applyTd({ players: t0.players });
+      return Promise.resolve();
+    }
+    return fetch(API + "/latest", {
+      headers: { "X-Access-Key": CONFIG.accessKey, "X-Bin-Meta": "false" }
+    })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) {
+        if (localDirty) return;        // our own durable change is pending — don't interfere
+        setCache(data, true);          // adopt the freshest state (incl. the other's latest move)
+        var t = getTd(); t.players[meId] = Date.now();
+        applyTd({ players: t.players });
+        schedulePush(false);           // ephemeral: write presence on top of fresh state
+      })
+      .catch(function () { /* offline: presence ages, session stays alive anyway */ });
+  }
+
   /* poll tick: flush pending local change, else pull the shared state */
   function tick() {
     if (localDirty) pushRemote();
@@ -241,6 +264,7 @@ window.Quest = (function () {
   return {
     MAX: MAX, DEFAULT_LEVEL: DEFAULT_LEVEL, ITEMS: ITEMS, remoteEnabled: remoteEnabled,
     init: init, onChange: onChange, setActive: setActive, flush: flush,
+    heartbeatPresence: heartbeatPresence,
     getLevel: getLevel, getItems: getItems, getTd: getTd,
     setLevel: setLevel, setItems: setItems, setItem: setItem,
     updateTd: updateTd, updateTdEphemeral: updateTdEphemeral
