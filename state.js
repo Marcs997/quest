@@ -144,21 +144,28 @@ window.Quest = (function () {
   }
 
   function pushRemote() {
-    if (!remoteEnabled) { localDirty = false; return; }
+    if (!remoteEnabled) { localDirty = false; return Promise.resolve(); }
     var payload = JSON.stringify(cache);
-    fetch(API, {
+    return fetch(API, {
       method: "PUT",
       headers: { "Content-Type": "application/json", "X-Access-Key": CONFIG.accessKey },
-      body: payload
+      body: payload,
+      keepalive: true   // completes even if the page navigates away (used by quit)
     })
       .then(function (r) { if (r.ok && JSON.stringify(cache) === payload) localDirty = false; })
       .catch(function () { /* stays dirty: retried on next poll tick */ });
   }
 
-  function schedulePush() {
-    localDirty = true;
+  function schedulePush(important) {
+    if (important !== false) localDirty = true; // ephemeral writes don't block reads
     if (putTimer) clearTimeout(putTimer);
     putTimer = setTimeout(pushRemote, 250); // debounce rapid clicks
+  }
+
+  /* push the current state to the bin immediately (no debounce); returns a promise */
+  function flush() {
+    if (putTimer) { clearTimeout(putTimer); putTimer = null; }
+    return pushRemote();
   }
 
   /* poll tick: flush pending local change, else pull the shared state */
@@ -191,12 +198,15 @@ window.Quest = (function () {
     setCache({ level: cache.level, items: arr.map(Boolean), td: cache.td }, true);
     schedulePush();
   }
-  function updateTd(patch) {
+  function applyTd(patch) {
     var t = getTd();
     for (var k in patch) { if (patch.hasOwnProperty(k)) t[k] = patch[k]; }
     setCache({ level: cache.level, items: cache.items.slice(), td: t }, true);
-    schedulePush();
   }
+  // durable write (turn actions, join, quit): protected from being reverted by a poll
+  function updateTd(patch) { applyTd(patch); schedulePush(true); }
+  // ephemeral write (presence heartbeat): must NOT block reading others' changes
+  function updateTdEphemeral(patch) { applyTd(patch); schedulePush(false); }
   function setItem(i, val) {
     var items = cache.items.slice();
     items[i] = !!val;
@@ -230,8 +240,9 @@ window.Quest = (function () {
 
   return {
     MAX: MAX, DEFAULT_LEVEL: DEFAULT_LEVEL, ITEMS: ITEMS, remoteEnabled: remoteEnabled,
-    init: init, onChange: onChange, setActive: setActive,
+    init: init, onChange: onChange, setActive: setActive, flush: flush,
     getLevel: getLevel, getItems: getItems, getTd: getTd,
-    setLevel: setLevel, setItems: setItems, setItem: setItem, updateTd: updateTd
+    setLevel: setLevel, setItems: setItems, setItem: setItem,
+    updateTd: updateTd, updateTdEphemeral: updateTdEphemeral
   };
 })();

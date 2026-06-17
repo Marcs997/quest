@@ -11,6 +11,8 @@
   var me = parseInt(localStorage.getItem("quest.td.me"), 10);
   if (me !== 1 && me !== 2) { location.href = "index.html"; return; }
   var other = me === 1 ? 2 : 1;
+  var ready = false;     // true once the shared state has loaded from the bin
+  var quitting = false;  // true once the player has hit "Quitter le jeu"
 
   var lobby = document.getElementById("tdLobby");
   var game = document.getElementById("tdGame");
@@ -46,9 +48,18 @@
     Q.updateTd({ response: text, log: log, asker: td.asker === 1 ? 2 : 1, phase: "start" });
   }
   function doQuit() {
+    quitting = true;
     var td = Q.getTd(); td.players[me] = 0;
-    Q.updateTd({ players: td.players, active: false });
-    location.href = "index.html";
+    // close the session for both players and reset it for a clean next game
+    Q.updateTd({
+      players: td.players, active: false, phase: "start", round: 0,
+      choice: null, prompt: null, response: null, log: []
+    });
+    localStorage.removeItem("quest.td.me");
+    // send the quit to the bin BEFORE navigating away, else the debounced push is cancelled
+    var go = function () { location.href = "index.html"; };
+    Q.flush().then(go, go);
+    setTimeout(go, 1500); // fallback if the network is slow
   }
 
   /* ---- rendu du journal ---- */
@@ -87,7 +98,15 @@
 
   /* ---- rendu principal ---- */
   function render() {
+    if (quitting) return;   // stop reclaiming presence once we're leaving
     var td = Q.getTd();
+    // do NOT write anything before the real level/items have loaded from the bin,
+    // otherwise an early presence write would push default values and clobber them.
+    if (!ready) {
+      lobby.hidden = false; game.hidden = true;
+      statusEl.textContent = "Connexion…";
+      return;
+    }
     // re-claim my own presence if a concurrent write dropped it (join race).
     // localDirty (in state.js) prevents the next poll from clobbering it again.
     if (!present(td, me)) {
@@ -151,6 +170,7 @@
   document.getElementById("tdQuit").onclick = doQuit;
   Q.onChange(render);
   Q.init().then(function () {
+    ready = true;                 // remote level/items are now loaded
     Q.setActive(true);
     var td = Q.getTd(); td.players[me] = Date.now();
     Q.updateTd({ players: td.players });
@@ -158,7 +178,7 @@
     setInterval(function () {
       if (!document.hidden) {
         var t = Q.getTd(); t.players[me] = Date.now();
-        Q.updateTd({ players: t.players });
+        Q.updateTdEphemeral({ players: t.players }); // refresh presence without blocking reads
       }
     }, HEARTBEAT_MS);
   });
