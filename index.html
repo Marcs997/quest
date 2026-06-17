@@ -31,6 +31,20 @@
         <img src="Ressources/Logo.png" alt="QUEST" />
       </header>
 
+      <!-- game-mode menu -->
+      <div class="modebar">
+        <div class="dropdown" id="modeDropdown">
+          <button type="button" class="btn-mode" id="modeBtn" aria-haspopup="true" aria-expanded="false">
+            <span>MODE DE JEU</span><span class="btn-mode__caret">▾</span>
+          </button>
+          <ul class="dropdown__menu" id="modeMenu" role="menu" hidden>
+            <li><button class="dropdown__item is-disabled" disabled role="menuitem">Mode histoire <em>bientôt</em></button></li>
+            <li><button class="dropdown__item is-disabled" disabled role="menuitem">Jeu de rôle <em>bientôt</em></button></li>
+            <li><button class="dropdown__item" data-mode="td" role="menuitem">Action ou vérité</button></li>
+          </ul>
+        </div>
+      </div>
+
       <!-- progress bar -->
       <section class="progress" aria-label="Progression du jeu">
         <div class="progress__head">
@@ -86,6 +100,24 @@
       </section>
 
     </main>
+
+    <!-- player select for Action ou Vérité -->
+    <div class="modal" id="tdModal" hidden>
+      <div class="modal__box">
+        <button class="modal__close" id="tdModalClose" aria-label="Fermer">✕</button>
+        <h2 class="modal__title">ACTION OU VÉRITÉ</h2>
+        <p class="modal__text">Tu es quel joueur ?</p>
+        <div class="modal__choices">
+          <button class="pick pick--1" data-player="1">
+            <img src="Ressources/Perso1.png" alt="" /><span>JOUEUR 1</span><small>Camille</small>
+          </button>
+          <button class="pick pick--2" data-player="2">
+            <img src="Ressources/Perso2.png" alt="" /><span>JOUEUR 2</span><small>Marc</small>
+          </button>
+        </div>
+        <p class="modal__hint" id="tdModalHint"></p>
+      </div>
+    </div>
   </div>
 
   <script src="state.js"></script>

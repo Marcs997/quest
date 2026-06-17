@@ -71,5 +71,53 @@
     // initial paint, then load shared state from the JSON bin
     requestAnimationFrame(function () { renderLevel(true); renderItems(); });
     Q.init();
+
+    // ---- game mode dropdown ----
+    var modeBtn = document.getElementById("modeBtn");
+    var modeMenu = document.getElementById("modeMenu");
+    function closeMenu() { modeMenu.hidden = true; modeBtn.setAttribute("aria-expanded", "false"); }
+    if (modeBtn) {
+      modeBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = modeMenu.hidden;
+        modeMenu.hidden = !open;
+        modeBtn.setAttribute("aria-expanded", String(open));
+      });
+      document.addEventListener("click", closeMenu);
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+    }
+
+    // ---- player-select modal ----
+    var modal = document.getElementById("tdModal");
+    var hint = document.getElementById("tdModalHint");
+    function openModal() {
+      modal.hidden = false;
+      var td = Q.getTd();
+      var now = Date.now();
+      [1, 2].forEach(function (n) {
+        var taken = (now - (td.players[n] || 0)) < 25000;
+        var btn = modal.querySelector('.pick[data-player="' + n + '"]');
+        btn.classList.toggle("is-taken", taken);
+      });
+      hint.textContent = "";
+    }
+    var tdItem = modeMenu && modeMenu.querySelector('[data-mode="td"]');
+    if (tdItem) tdItem.addEventListener("click", function () { closeMenu(); openModal(); });
+    document.getElementById("tdModalClose").addEventListener("click", function () { modal.hidden = true; });
+    modal.addEventListener("click", function (e) { if (e.target === modal) modal.hidden = true; });
+    modal.querySelectorAll(".pick").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var n = parseInt(btn.getAttribute("data-player"), 10);
+        var td = Q.getTd();
+        if ((Date.now() - (td.players[n] || 0)) < 25000) {
+          hint.textContent = "Ce joueur est déjà pris.";
+          return;
+        }
+        localStorage.setItem("quest.td.me", n);
+        td.players[n] = Date.now();
+        Q.updateTd({ players: td.players });
+        location.href = "action-verite.html";
+      });
+    });
   });
 })();
