@@ -595,3 +595,118 @@ img, canvas {
 .admin__back a { color: var(--teal); text-decoration: none; }
 .admin__back a:hover { text-decoration: underline; }
 .hidden { display: none !important; }
+
+/* ============================================================
+   GAME MODE dropdown + Action ou Vérité
+   ============================================================ */
+.modebar { width: 100%; display: flex; justify-content: center; }
+.dropdown { position: relative; }
+.btn-mode {
+  font-family: "Press Start 2P", monospace; font-size: 12px; color: #04121a;
+  background: linear-gradient(180deg, #8ff6e6, var(--teal) 60%, var(--teal-deep));
+  border: var(--tick) solid #6fe9d6; outline: 2px solid #04070d;
+  padding: 12px 16px; cursor: pointer; display: inline-flex; gap: 10px; align-items: center;
+  box-shadow: 0 5px 0 var(--teal-deep), 0 5px 0 2px #04070d;
+}
+.btn-mode:active { transform: translateY(5px); box-shadow: 0 0 0 var(--teal-deep), 0 0 0 2px #04070d; }
+.btn-mode__caret { font-size: 10px; }
+.dropdown__menu {
+  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  margin: 0; padding: 6px; list-style: none; min-width: 220px; z-index: 20;
+  background: var(--panel); border: var(--tick) solid var(--line);
+  box-shadow: 0 var(--tick) 0 #04070d, inset 0 0 0 2px var(--panel-hi);
+}
+.dropdown__menu li { margin: 0; }
+.dropdown__item {
+  width: 100%; text-align: left; font-family: "Press Start 2P", monospace; font-size: 10px;
+  color: var(--ink); background: transparent; border: 0; padding: 12px 10px; cursor: pointer;
+}
+.dropdown__item:hover:not(.is-disabled) { background: var(--panel-hi); color: var(--teal); }
+.dropdown__item.is-disabled { color: var(--ink-dim); cursor: not-allowed; }
+.dropdown__item em { font-style: normal; font-size: 8px; opacity: .7; margin-left: 6px; }
+
+/* modal */
+.modal {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 7, 13, .78); padding: 20px;
+}
+.modal__box {
+  position: relative; width: 100%; max-width: 460px; background: var(--panel);
+  border: var(--tick) solid var(--line); outline: 2px solid #04070d;
+  box-shadow: 0 var(--tick) 0 #04070d, 0 0 30px rgba(67,232,207,.2), inset 0 0 0 2px var(--panel-hi);
+  padding: 26px; text-align: center;
+}
+.modal__close {
+  position: absolute; top: 10px; right: 10px; background: transparent; border: 0;
+  color: var(--ink-dim); font-family: "Press Start 2P", monospace; font-size: 12px; cursor: pointer;
+}
+.modal__title { font-family: "Press Start 2P", monospace; font-size: 15px; color: var(--teal); margin: 0 0 14px; text-shadow: 0 0 12px rgba(67,232,207,.5); }
+.modal__text { font-size: 18px; color: var(--ink); margin: 0 0 18px; }
+.modal__choices { display: flex; gap: 16px; justify-content: center; }
+.pick {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 8px; cursor: pointer; background: var(--bg-1);
+  border: var(--tick) solid var(--line); box-shadow: 0 var(--tick) 0 #04070d;
+  font-family: "Press Start 2P", monospace; font-size: 10px; color: var(--ink);
+}
+.pick img { height: 80px; width: auto; image-rendering: pixelated; }
+.pick small { font-family: "VT323", monospace; font-size: 16px; color: var(--ink-dim); }
+.pick--1 { border-color: var(--teal-deep); }
+.pick--1 span { color: var(--teal); }
+.pick--2 { border-color: var(--amber-deep); }
+.pick--2 span { color: var(--amber); }
+.pick:hover { filter: brightness(1.1); }
+.pick.is-taken { opacity: .4; }
+.modal__hint { min-height: 14px; margin: 14px 0 0; font-family: "Press Start 2P", monospace; font-size: 8px; color: #ff6b6b; }
+
+/* game page */
+.td-page {
+  position: relative; z-index: 1; width: 100%; max-width: 680px; margin: 0 auto;
+  padding: clamp(16px, 4vw, 36px) 18px 50px; display: flex; flex-direction: column; gap: 22px;
+}
+.td-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.td-back { font-family: "Press Start 2P", monospace; font-size: 9px; color: var(--teal); text-decoration: none; }
+.td-back:hover { text-decoration: underline; }
+.td-title { flex: 1; text-align: center; font-family: "Press Start 2P", monospace; font-size: 14px; color: var(--ink); text-shadow: 0 0 12px rgba(67,232,207,.4); margin: 0; }
+.td-me { font-family: "Press Start 2P", monospace; font-size: 8px; color: var(--ink-dim); white-space: nowrap; }
+
+.td-lobby { text-align: center; padding: 60px 0; }
+.td-spinner {
+  width: 26px; height: 26px; margin: 0 auto 18px; background: var(--teal);
+  animation: td-spin 1s steps(8) infinite;
+}
+@keyframes td-spin { to { transform: rotate(360deg); } }
+.td-status { font-family: "Press Start 2P", monospace; font-size: 11px; color: var(--ink-dim); }
+
+.td-role { font-family: "Press Start 2P", monospace; font-size: 12px; text-align: center; padding: 12px; border: var(--tick) solid var(--line); background: var(--panel); }
+.td-role--asker { color: var(--teal); border-color: var(--teal-deep); }
+.td-role--answerer { color: var(--amber); border-color: var(--amber-deep); }
+
+.td-action { min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+.td-big { font-size: 16px; padding: 16px 26px; }
+.td-q { font-size: 20px; color: var(--ink); margin: 0; }
+.td-wait { font-family: "Press Start 2P", monospace; font-size: 10px; color: var(--ink-dim); }
+.td-choice { display: flex; gap: 16px; }
+.td-input {
+  width: 100%; max-width: 460px; font-family: "VT323", monospace; font-size: 20px; color: var(--ink);
+  background: #0a1426; border: var(--tick) solid var(--line); outline: 2px solid #04070d; padding: 10px; resize: vertical;
+}
+.td-input:focus { border-color: var(--teal); }
+
+.td-journal { background: var(--panel); border: var(--tick) solid var(--line); box-shadow: inset 0 0 0 2px var(--panel-hi); padding: 16px; }
+.td-journal__title { font-family: "Press Start 2P", monospace; font-size: 9px; color: var(--ink-dim); margin: 0 0 12px; letter-spacing: 1px; }
+.td-log { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.td-log__empty { font-family: "VT323", monospace; font-size: 18px; color: var(--ink-dim); text-align: center; }
+.td-msg { font-family: "VT323", monospace; font-size: 18px; line-height: 1.2; padding: 6px 10px; border-left: 4px solid var(--line); background: var(--bg-1); }
+.td-msg--p1 { border-left-color: var(--teal); }
+.td-msg--p2 { border-left-color: var(--amber); }
+.td-msg__who { font-family: "Press Start 2P", monospace; font-size: 8px; margin-right: 8px; }
+.td-msg--p1 .td-msg__who { color: var(--teal); }
+.td-msg--p2 .td-msg__who { color: var(--amber); }
+.td-msg__kind { color: var(--ink-dim); margin-right: 6px; }
+.td-quit { align-self: center; }
+
+@media (max-width: 460px) {
+  .pick img { height: 60px; }
+  .td-title { font-size: 11px; }
+}
