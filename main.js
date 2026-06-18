@@ -92,10 +92,9 @@
     var hint = document.getElementById("tdModalHint");
     function openModal() {
       modal.hidden = false;
-      var td = Q.getTd();
-      var now = Date.now();
+      var td = window.QuestTd ? window.QuestTd.getTd() : { presence: {} };
       [1, 2].forEach(function (n) {
-        var taken = (now - (td.players[n] || 0)) < 25000;
+        var taken = !!(td.presence && td.presence[n]);
         var btn = modal.querySelector('.pick[data-player="' + n + '"]');
         btn.classList.toggle("is-taken", taken);
       });
@@ -108,14 +107,12 @@
     modal.querySelectorAll(".pick").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var n = parseInt(btn.getAttribute("data-player"), 10);
-        var td = Q.getTd();
-        if ((Date.now() - (td.players[n] || 0)) < 25000) {
+        var td = window.QuestTd ? window.QuestTd.getTd() : { presence: {} };
+        if (td.presence && td.presence[n]) {
           hint.textContent = "Ce joueur est déjà pris.";
           return;
         }
-        localStorage.setItem("quest.td.me", n);
-        td.players[n] = Date.now();
-        Q.updateTd({ players: td.players });
+        localStorage.setItem("quest.td.me", n);     // la présence est posée par td.js (goOnline)
         location.href = "action-verite.html";
       });
     });

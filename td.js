@@ -1,19 +1,16 @@
 /* ============================================================
    QUEST — mode « Action ou Vérité » (jeu en tours, 2 appareils)
-   S'appuie sur l'état partagé Quest (objet td).
+   S'appuie sur la session temps réel Firebase (window.QuestTd, td-sync.js).
    ============================================================ */
 (function () {
   "use strict";
-  var Q = window.Quest;
-  var PRESENCE_TTL = 40000;   // un joueur est "présent" si vu il y a < 40s
-  var HEARTBEAT_MS = 10000;   // rafraîchit sa présence toutes les 10s
+  // Présence gérée par Firebase (onDisconnect) — plus de polling ni de TTL.
 
   var me = parseInt(localStorage.getItem("quest.td.me"), 10);
   if (me !== 1 && me !== 2) { location.href = "index.html"; return; }
   var other = me === 1 ? 2 : 1;
-  var ready = false;     // true once the shared state has loaded from the bin
-  var quitting = false;  // true once the player has hit "Quitter le jeu"
-  var lastActionKey = null; // last rendered action-area "view" (avoids wiping typed text)
+  var quitting = false;       // true once the player has hit "Quitter le jeu"
+  var lastActionKey = null;   // last rendered action-area "view" (avoids wiping typed text)
 
   var lobby = document.getElementById("tdLobby");
   var game = document.getElementById("tdGame");
@@ -22,7 +19,7 @@
   var actionEl = document.getElementById("tdAction");
   var logEl = document.getElementById("tdLog");
 
-  function present(td, n) { return (Date.now() - (td.players[n] || 0)) < PRESENCE_TTL; }
+  function present(td, n) { return !!(td.presence && td.presence[n]); }
   function pname(n) { return n === 1 ? "Joueur 1" : "Joueur 2"; }
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
@@ -32,34 +29,29 @@
 
   /* ---- actions (chacune protégée par rôle + phase) ---- */
   function doStart() {
-    var td = Q.getTd(); if (me !== td.asker || td.phase !== "start") return;
-    Q.updateTd({ round: td.round + 1, choice: null, prompt: null, response: null, phase: "choose" });
+    var td = window.QuestTd.getTd(); if (me !== td.asker || td.phase !== "start") return;
+    window.QuestTd.updateTd({ round: td.round + 1, choice: null, prompt: null, response: null, phase: "choose" });
   }
   function doChoose(c) {
-    var td = Q.getTd(); if (me === td.asker || td.phase !== "choose") return;
-    Q.updateTd({ choice: c, phase: "prompt" });
+    var td = window.QuestTd.getTd(); if (me === td.asker || td.phase !== "choose") return;
+    window.QuestTd.updateTd({ choice: c, phase: "prompt" });
   }
   function doPrompt(text) {
-    var td = Q.getTd(); if (me !== td.asker || td.phase !== "prompt") return;
-    Q.updateTd({ prompt: text, phase: "respond" });
+    var td = window.QuestTd.getTd(); if (me !== td.asker || td.phase !== "prompt") return;
+    window.QuestTd.updateTd({ prompt: text, phase: "respond" });
   }
   function doRespond(text) {
-    var td = Q.getTd(); if (me === td.asker || td.phase !== "respond") return;
-    var log = td.log.concat([{ round: td.round, asker: td.asker, choice: td.choice, prompt: td.prompt, response: text }]);
-    Q.updateTd({ response: text, log: log, asker: td.asker === 1 ? 2 : 1, phase: "start" });
+    var td = window.QuestTd.getTd(); if (me === td.asker || td.phase !== "respond") return;
+    window.QuestTd.pushLog({ round: td.round, asker: td.asker, choice: td.choice, prompt: td.prompt, response: text })
+      .then(function () {
+        window.QuestTd.updateTd({ response: text, asker: td.asker === 1 ? 2 : 1, phase: "start" });
+      });
   }
   function doQuit() {
     quitting = true;
-    var td = Q.getTd(); td.players[me] = 0;
-    // close the session for both players and reset it for a clean next game
-    Q.updateTd({
-      players: td.players, active: false, phase: "start", round: 0,
-      choice: null, prompt: null, response: null, log: []
-    });
     localStorage.removeItem("quest.td.me");
-    // send the quit to the bin BEFORE navigating away, else the debounced push is cancelled
     var go = function () { location.href = "index.html"; };
-    Q.flush().then(go, go);
+    window.QuestTd.quit(me).then(go, go);
     setTimeout(go, 1500); // fallback if the network is slow
   }
 
@@ -100,24 +92,15 @@
   /* ---- rendu principal ---- */
   function render() {
     if (quitting) return;   // stop reclaiming presence once we're leaving
-    var td = Q.getTd();
-    // do NOT write anything before the real level/items have loaded from the bin,
-    // otherwise an early presence write would push default values and clobber them.
-    if (!ready) {
+    var td = window.QuestTd.getTd();
+    if (!window.QuestTd.isReady()) {
       lobby.hidden = false; game.hidden = true;
       statusEl.textContent = "Connexion…";
       return;
     }
-    // re-claim my own presence if a concurrent write dropped it (join race).
-    // localDirty (in state.js) prevents the next poll from clobbering it again.
-    if (!present(td, me)) {
-      td.players[me] = Date.now();
-      Q.updateTd({ players: td.players });
-      return;
-    }
     // player 1 démarre la session quand les deux sont présents
     if (me === 1 && !td.active && present(td, 1) && present(td, 2)) {
-      Q.updateTd({ active: true, asker: 1, phase: "start", round: 0, choice: null, prompt: null, response: null, log: [] });
+      window.QuestTd.startSession({ asker: 1, phase: "start", round: 0, choice: null, prompt: null, response: null, log: null });
       return;
     }
     if (!td.active) {
@@ -181,21 +164,13 @@
   }
 
   /* ---- boot ---- */
-  document.getElementById("tdMe").textContent = "Tu es " + pname(me);
-  document.getElementById("tdQuit").onclick = doQuit;
-  Q.onChange(render);
-  Q.init().then(function () {
-    ready = true;                 // remote level/items are now loaded
-    Q.setActive(true);
-    var td = Q.getTd(); td.players[me] = Date.now();
-    Q.updateTd({ players: td.players });
+  function boot() {
+    document.getElementById("tdMe").textContent = "Tu es " + pname(me);
+    document.getElementById("tdQuit").onclick = doQuit;
+    window.QuestTd.onChange(render);
+    window.QuestTd.goOnline(me);   // présence (onDisconnect gère l'absence)
     render();
-    function beat() {
-      if (!ready || quitting) return;
-      Q.heartbeatPresence(me); // reads freshest state first, then writes presence (no clobber)
-    }
-    setInterval(function () { if (!document.hidden) beat(); }, HEARTBEAT_MS);
-    // coming back from background (e.g. unlocking the phone): re-assert presence at once
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) beat(); });
-  });
+  }
+  if (window.QuestTd) boot();
+  else window.addEventListener("questtd-ready", boot, { once: true });
 })();
