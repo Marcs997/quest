@@ -1,6 +1,6 @@
 /* ============================================================
    QUEST — mode « Action ou Vérité » (jeu en tours, 2 appareils)
-   S'appuie sur l'état partagé Quest (objet td).
+   S'appuie sur la session temps réel Firebase (window.QuestTd, td-sync.js).
    ============================================================ */
 (function () {
   "use strict";
