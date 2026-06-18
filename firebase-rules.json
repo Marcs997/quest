@@ -4,6 +4,10 @@
       ".read": true,
       ".write": true
     },
+    "morpion": {
+      ".read": true,
+      ".write": true
+    },
     "$other": {
       ".read": false,
       ".write": false

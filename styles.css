@@ -713,3 +713,36 @@ img, canvas {
   .pick img { height: 60px; }
   .td-title { font-size: 11px; }
 }
+
+/* ===== Le Morpion ===== */
+.mp-score {
+  display: flex; justify-content: center; gap: 14px;
+  font-family: "Press Start 2P", monospace; font-size: 10px;
+  margin-bottom: 14px; flex-wrap: wrap;
+}
+.mp-score__cell { color: #9fb3c8; }
+.mp-score__cell b { color: #e6f0fa; margin-left: 4px; }
+.mp-score__cell--x b { color: #43e8cf; }
+.mp-score__cell--o b { color: #f5b942; }
+
+.mp-board {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  width: min(82vw, 340px); aspect-ratio: 1 / 1; margin: 0 auto 16px;
+}
+.mp-cell {
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Press Start 2P", monospace; font-size: clamp(28px, 11vw, 52px);
+  background: #12203a; color: #e6f0fa;
+  border: 2px solid #28406b; border-radius: 8px;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.35);
+  cursor: default; aspect-ratio: 1 / 1; image-rendering: pixelated;
+  transition: background .08s, transform .08s;
+}
+.mp-cell--x { color: #43e8cf; text-shadow: 0 0 8px rgba(67,232,207,.5); }
+.mp-cell--o { color: #f5b942; text-shadow: 0 0 8px rgba(245,185,66,.5); }
+.mp-cell--playable { cursor: pointer; }
+.mp-cell--playable:hover { background: #17284a; transform: translateY(-2px); }
+.mp-cell--playable:active { transform: translateY(0); }
+.mp-cell[disabled] { cursor: default; }
+
+.mp-actions { min-height: 48px; display: flex; justify-content: center; align-items: center; margin-bottom: 8px; }

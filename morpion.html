@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>QUEST · Le Morpion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-stars" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <main class="td-page">
+    <header class="td-head">
+      <a class="td-back" href="index.html">← QUEST</a>
+      <h1 class="td-title">LE MORPION</h1>
+      <span class="td-me" id="mpMe"></span>
+    </header>
+
+    <section class="td-lobby" id="mpLobby">
+      <div class="td-spinner" aria-hidden="true"></div>
+      <p class="td-status" id="mpStatus">Connexion…</p>
+    </section>
+
+    <section class="td-game" id="mpGame" hidden>
+      <div class="mp-score" id="mpScore"></div>
+      <div class="td-role" id="mpStatusLine"></div>
+      <p class="td-absent" id="mpAbsent" hidden></p>
+      <div class="mp-board" id="mpBoard"></div>
+      <div class="mp-actions" id="mpActions"></div>
+      <button class="pbtn pbtn--danger td-quit" id="mpQuit">QUITTER LE JEU</button>
+    </section>
+  </main>
+
+  <script type="module" src="morpion-sync.js"></script>
+  <script src="morpion-rules.js"></script>
+  <script src="morpion.js"></script>
+</body>
+</html>

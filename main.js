@@ -87,33 +87,48 @@
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
     }
 
-    // ---- player-select modal ----
+    // ---- player-select modal (générique multi-jeux) ----
+    var GAMES = {
+      td:      { title: "ACTION OU VÉRITÉ", page: "action-verite.html", lsKey: "quest.td.me",      api: function () { return window.QuestTd; } },
+      morpion: { title: "LE MORPION",       page: "morpion.html",       lsKey: "quest.morpion.me", api: function () { return window.QuestMorpion; } }
+    };
     var modal = document.getElementById("tdModal");
     var hint = document.getElementById("tdModalHint");
-    function openModal() {
+    var titleEl = modal.querySelector(".modal__title");
+    var currentGame = null;
+
+    function presenceOf(game) {
+      var api = game.api();
+      var st = api ? (api.getState ? api.getState() : api.getTd()) : null;
+      return (st && st.presence) ? st.presence : {};
+    }
+    function openModal(gameKey) {
+      currentGame = GAMES[gameKey];
+      if (!currentGame) return;
       modal.hidden = false;
-      var td = window.QuestTd ? window.QuestTd.getTd() : { presence: {} };
+      titleEl.textContent = currentGame.title;
+      var pres = presenceOf(currentGame);
       [1, 2].forEach(function (n) {
-        var taken = !!(td.presence && td.presence[n]);
         var btn = modal.querySelector('.pick[data-player="' + n + '"]');
-        btn.classList.toggle("is-taken", taken);
+        btn.classList.toggle("is-taken", !!pres[n]);
       });
       hint.textContent = "";
     }
-    var tdItem = modeMenu && modeMenu.querySelector('[data-mode="td"]');
-    if (tdItem) tdItem.addEventListener("click", function () { closeMenu(); openModal(); });
+    modeMenu.querySelectorAll("[data-mode]").forEach(function (item) {
+      var key = item.getAttribute("data-mode");
+      if (!GAMES[key]) return; // entrées "bientôt" ignorées
+      item.addEventListener("click", function () { closeMenu(); openModal(key); });
+    });
     document.getElementById("tdModalClose").addEventListener("click", function () { modal.hidden = true; });
     modal.addEventListener("click", function (e) { if (e.target === modal) modal.hidden = true; });
     modal.querySelectorAll(".pick").forEach(function (btn) {
       btn.addEventListener("click", function () {
+        if (!currentGame) return;
         var n = parseInt(btn.getAttribute("data-player"), 10);
-        var td = window.QuestTd ? window.QuestTd.getTd() : { presence: {} };
-        if (td.presence && td.presence[n]) {
-          hint.textContent = "Ce joueur est déjà pris.";
-          return;
-        }
-        localStorage.setItem("quest.td.me", n);     // la présence est posée par td.js (goOnline)
-        location.href = "action-verite.html";
+        var pres = presenceOf(currentGame);
+        if (pres[n]) { hint.textContent = "Ce joueur est déjà pris."; return; }
+        localStorage.setItem(currentGame.lsKey, n); // présence posée par la page de jeu (goOnline)
+        location.href = currentGame.page;
       });
     });
   });
