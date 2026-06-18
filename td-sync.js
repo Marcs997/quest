@@ -81,7 +81,8 @@ function startSession(fields) {
 }
 
 /* me marque présent ; Firebase efface automatiquement à la perte du socket.
-   .info/connected ré-arme onDisconnect à chaque reconnexion. */
+   .info/connected ré-arme onDisconnect à chaque reconnexion.
+   À appeler UNE SEULE FOIS par chargement de page (pas de désabonnement). */
 function goOnline(me) {
   var pRef = ref(db, "td/presence/" + me + "/online");
   onValue(ref(db, ".info/connected"), function (snap) {
