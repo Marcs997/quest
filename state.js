@@ -22,10 +22,6 @@ window.Quest = (function () {
 
   var MAX = 99, DEFAULT_LEVEL = 5;
   var POLL_IDLE = 5000, POLL_ACTIVE = 2000;
-  var DEFAULT_TD = {
-    active: false, players: { 1: 0, 2: 0 }, asker: 1,
-    phase: "start", choice: null, prompt: null, response: null, round: 0, log: []
-  };
   var LS_KEY = "quest.state";
   var API = "https://api.jsonbin.io/v3/b/" + CONFIG.binId;
   var remoteEnabled =
@@ -76,8 +72,7 @@ window.Quest = (function () {
   /* ---- internal state ---- */
   var cache = {
     level: DEFAULT_LEVEL,
-    items: ITEMS.map(function () { return false; }),
-    td: JSON.parse(JSON.stringify(DEFAULT_TD))
+    items: ITEMS.map(function () { return false; })
   };
   var lastSerialized = "";
   var listeners = [];
@@ -86,23 +81,6 @@ window.Quest = (function () {
 
   function clampLevel(v) { return Math.max(0, Math.min(MAX, v | 0)); }
 
-  function normTd(t) {
-    t = t || {};
-    var pl = t.players || {};
-    var phases = ["start", "choose", "prompt", "respond"];
-    return {
-      active: !!t.active,
-      players: { 1: parseInt(pl[1], 10) || 0, 2: parseInt(pl[2], 10) || 0 },
-      asker: t.asker === 2 ? 2 : 1,
-      phase: phases.indexOf(t.phase) >= 0 ? t.phase : "start",
-      choice: (t.choice === "action" || t.choice === "verite") ? t.choice : null,
-      prompt: typeof t.prompt === "string" ? t.prompt : null,
-      response: typeof t.response === "string" ? t.response : null,
-      round: parseInt(t.round, 10) || 0,
-      log: Array.isArray(t.log) ? t.log.slice(-60) : []
-    };
-  }
-
   function normalize(d) {
     d = d || {};
     var lvl = parseInt(d.level, 10);
@@ -110,8 +88,7 @@ window.Quest = (function () {
       ? d.items.map(Boolean) : ITEMS.map(function () { return false; });
     return {
       level: isNaN(lvl) ? DEFAULT_LEVEL : clampLevel(lvl),
-      items: items,
-      td: normTd(d.td)
+      items: items
     };
   }
 
@@ -168,29 +145,6 @@ window.Quest = (function () {
     return pushRemote();
   }
 
-  /* Refresh my presence safely. Read the freshest state FIRST, then write presence
-     on top of it — otherwise a heartbeat writing a stale whole-object cache would
-     clobber a move the other player just made (question "appears then vanishes"). */
-  function heartbeatPresence(meId) {
-    if (!remoteEnabled) {
-      var t0 = getTd(); t0.players[meId] = Date.now();
-      applyTd({ players: t0.players });
-      return Promise.resolve();
-    }
-    return fetch(API + "/latest", {
-      headers: { "X-Access-Key": CONFIG.accessKey, "X-Bin-Meta": "false" }
-    })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (data) {
-        if (localDirty) return;        // our own durable change is pending — don't interfere
-        setCache(data, true);          // adopt the freshest state (incl. the other's latest move)
-        var t = getTd(); t.players[meId] = Date.now();
-        applyTd({ players: t.players });
-        schedulePush(false);           // ephemeral: write presence on top of fresh state
-      })
-      .catch(function () { /* offline: presence ages, session stays alive anyway */ });
-  }
-
   /* poll tick: flush pending local change, else pull the shared state */
   function tick() {
     if (localDirty) pushRemote();
@@ -211,25 +165,15 @@ window.Quest = (function () {
   /* ---- public API ---- */
   function getLevel() { return cache.level; }
   function getItems() { return cache.items.slice(); }
-  function getTd() { return JSON.parse(JSON.stringify(cache.td)); }
 
   function setLevel(v) {
-    setCache({ level: clampLevel(v), items: cache.items.slice(), td: cache.td }, true);
+    setCache({ level: clampLevel(v), items: cache.items.slice() }, true);
     schedulePush();
   }
   function setItems(arr) {
-    setCache({ level: cache.level, items: arr.map(Boolean), td: cache.td }, true);
+    setCache({ level: cache.level, items: arr.map(Boolean) }, true);
     schedulePush();
   }
-  function applyTd(patch) {
-    var t = getTd();
-    for (var k in patch) { if (patch.hasOwnProperty(k)) t[k] = patch[k]; }
-    setCache({ level: cache.level, items: cache.items.slice(), td: t }, true);
-  }
-  // durable write (turn actions, join, quit): protected from being reverted by a poll
-  function updateTd(patch) { applyTd(patch); schedulePush(true); }
-  // ephemeral write (presence heartbeat): must NOT block reading others' changes
-  function updateTdEphemeral(patch) { applyTd(patch); schedulePush(false); }
   function setItem(i, val) {
     var items = cache.items.slice();
     items[i] = !!val;
@@ -264,9 +208,7 @@ window.Quest = (function () {
   return {
     MAX: MAX, DEFAULT_LEVEL: DEFAULT_LEVEL, ITEMS: ITEMS, remoteEnabled: remoteEnabled,
     init: init, onChange: onChange, setActive: setActive, flush: flush,
-    heartbeatPresence: heartbeatPresence,
-    getLevel: getLevel, getItems: getItems, getTd: getTd,
-    setLevel: setLevel, setItems: setItems, setItem: setItem,
-    updateTd: updateTd, updateTdEphemeral: updateTdEphemeral
+    getLevel: getLevel, getItems: getItems,
+    setLevel: setLevel, setItems: setItems, setItem: setItem
   };
 })();
