@@ -66,7 +66,17 @@ window.Quest = (function () {
         '<rect x="7" y="2" width="1" height="8" fill="#eef3f8"/>' +
         '<rect x="4" y="10" width="8" height="2" fill="#f7c948"/>' +
         '<rect x="7" y="12" width="2" height="3" fill="#6b4a2a"/>' +
-        '<rect x="6" y="15" width="4" height="1" fill="#f7c948"/></svg>' }
+        '<rect x="6" y="15" width="4" height="1" fill="#f7c948"/></svg>' },
+    { id: "heart", name: "Cœur",
+      svg: '<svg viewBox="0 0 16 16" shape-rendering="crispEdges">' +
+        '<rect x="4" y="3" width="3" height="1" fill="#e8455f"/>' +
+        '<rect x="9" y="3" width="3" height="1" fill="#e8455f"/>' +
+        '<rect x="3" y="4" width="10" height="3" fill="#e8455f"/>' +
+        '<rect x="4" y="7" width="8" height="1" fill="#e8455f"/>' +
+        '<rect x="5" y="8" width="6" height="1" fill="#e8455f"/>' +
+        '<rect x="6" y="9" width="4" height="1" fill="#e8455f"/>' +
+        '<rect x="7" y="10" width="2" height="1" fill="#e8455f"/>' +
+        '<rect x="4" y="4" width="2" height="1" fill="#ff8aa0"/></svg>' }
   ];
 
   /* ---- internal state ---- */
@@ -84,8 +94,10 @@ window.Quest = (function () {
   function normalize(d) {
     d = d || {};
     var lvl = parseInt(d.level, 10);
-    var items = (Array.isArray(d.items) && d.items.length === ITEMS.length)
-      ? d.items.map(Boolean) : ITEMS.map(function () { return false; });
+    // length-tolerant: garde les items existants et complète à false si le bin
+    // a moins d'entrées que ITEMS (ex: ajout d'un nouvel item). Ne touche jamais level.
+    var src = Array.isArray(d.items) ? d.items : [];
+    var items = ITEMS.map(function (_, i) { return Boolean(src[i]); });
     return {
       level: isNaN(lvl) ? DEFAULT_LEVEL : clampLevel(lvl),
       items: items
